@@ -1,0 +1,46 @@
+{{define "layout"}}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex, nofollow">
+<title>{{.Title}} · Shopping</title>
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/app.js" defer></script>
+<script src="/static/scan.js" defer></script>
+<script src="/static/passkeys.js" defer></script>
+<script src="/static/sync.js" defer></script>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+{{if .User}}
+<header class="topbar">
+  <a class="brand" href="/recipes">voidgrid shopping</a>
+  <nav class="tabs" aria-label="Main">
+    <a href="/recipes"{{if eq .Nav "recipes"}} class="active" aria-current="page"{{end}}>Recipes</a>
+    <a href="/planner"{{if eq .Nav "planner"}} class="active" aria-current="page"{{end}}>Planner</a>
+    <a href="/list"{{if eq .Nav "list"}} class="active" aria-current="page"{{end}}>List</a>
+    <a href="/staples"{{if eq .Nav "staples"}} class="active" aria-current="page"{{end}}>Staples</a>
+  </nav>
+  <div class="account">
+    {{if .User.IsAdmin}}<a href="/users"{{if eq .Nav "users"}} class="active" aria-current="page"{{end}}>Users</a>{{end}}
+    {{if .User.IsAdmin}}<a href="/settings"{{if eq .Nav "settings"}} class="active" aria-current="page"{{end}}>Settings</a>{{end}}
+    <a class="who" href="/account"{{if eq .Nav "account"}} aria-current="page"{{end}}>{{.User.DisplayName}}</a>
+    <form method="post" action="/logout" data-logout><button type="submit" class="link">Sign out</button></form>
+  </div>
+</header>
+{{end}}
+<main class="{{if .User}}app{{else}}plain{{end}}">
+{{template "content" .}}
+</main>
+{{if .User}}
+<nav class="tabbar" aria-label="Main">
+  <a href="/recipes"{{if eq .Nav "recipes"}} class="active" aria-current="page"{{end}}>Recipes</a>
+  <a href="/planner"{{if eq .Nav "planner"}} class="active" aria-current="page"{{end}}>Planner</a>
+  <a href="/list"{{if eq .Nav "list"}} class="active" aria-current="page"{{end}}>List</a>
+  <a href="/staples"{{if eq .Nav "staples"}} class="active" aria-current="page"{{end}}>Staples</a>
+</nav>
+{{end}}
+</body>
+</html>{{end}}

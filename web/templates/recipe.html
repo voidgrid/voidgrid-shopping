@@ -1,0 +1,74 @@
+{{define "content"}}
+<article class="recipe">
+  <div class="pagehead noprint">
+    <a href="/recipes">← All recipes</a>
+    <div class="actions">
+      <button type="button" data-print>Print</button>
+      <a class="btn" href="/planner/add?recipe_id={{.Recipe.ID}}">Add to planner</a>
+      <a class="btn" href="/recipes/{{.Recipe.ID}}/share">Share</a>
+      <a class="btn" href="/recipes/{{.Recipe.ID}}/edit">Edit</a>
+    </div>
+  </div>
+
+  <div class="rhead">
+    {{if .Recipe.Photo}}<img class="rphoto" src="/photos/{{.Recipe.Photo}}" alt="">{{end}}
+    <div>
+      <h1>{{.Recipe.Title}}</h1>
+      <form class="rating noprint" method="post" action="/recipes/{{.Recipe.ID}}/rating" aria-label="Family rating">
+        {{range seq 5}}<button type="submit" name="rating" value="{{.}}" class="star{{if le . $.Recipe.Rating}} on{{end}}"
+          aria-label="{{.}} star{{if gt . 1}}s{{end}}">{{if le . $.Recipe.Rating}}★{{else}}☆{{end}}</button>{{end}}
+        {{if .Recipe.Rating}}<button type="submit" name="rating" value="0" class="link">Clear</button>{{end}}
+      </form>
+      {{if .Recipe.Rating}}<p class="print-only stars">{{.Recipe.Rating}} of 5 stars</p>{{end}}
+      <ul class="facts">
+        {{with .Recipe.Course}}<li>{{.}}</li>{{end}}
+        {{with .Recipe.Cuisine}}<li>{{.}}</li>{{end}}
+        {{with .Recipe.MainIngredient}}<li>Main: {{.}}</li>{{end}}
+        {{if .Recipe.Servings}}<li>Serves {{.Recipe.Servings}}</li>{{end}}
+        {{with .Recipe.YieldText}}<li>Yield: {{.}}</li>{{end}}
+        {{with mins .Recipe.PrepMin}}<li>Prep {{.}}</li>{{end}}
+        {{with mins .Recipe.CookMin}}<li>Cook {{.}}</li>{{end}}
+        {{with mins .Recipe.TotalMin}}<li>Total {{.}}</li>{{end}}
+      </ul>
+      {{if .Recipe.Tags}}<p class="tags">{{range .Recipe.Tags}}<a class="chip" href="/recipes?tag={{.}}">{{.}}</a>{{end}}</p>{{end}}
+      {{if .Recipe.URL}}<p class="source">Source: <a href="{{.Recipe.URL}}" rel="noopener noreferrer nofollow" target="_blank">{{or .Recipe.Source (host .Recipe.URL)}}</a></p>
+      {{else if .Recipe.Source}}<p class="source">Source: {{.Recipe.Source}}</p>{{end}}
+    </div>
+  </div>
+
+  {{with .Recipe.Description}}<p class="desc">{{.}}</p>{{end}}
+
+  <section class="card nutbox">
+    {{if .NutBox}}
+    <h2>Nutrition per serving</h2>
+    <p class="macros"><strong>{{.NutBox.Kcal}}</strong> kcal · <strong>{{.NutBox.Protein}}</strong> g protein · <strong>{{.NutBox.Carbs}}</strong> g carbs · <strong>{{.NutBox.Fat}}</strong> g fat</p>
+    <p class="note">{{.NutBox.Note}} · <a class="noprint" href="/recipes/{{.Recipe.ID}}/nutrition">Details</a></p>
+    {{else}}
+    <p class="note noprint">No nutrition yet. <a href="/recipes/{{.Recipe.ID}}/nutrition">Choose foods for the ingredients</a> or enter it by hand.</p>
+    {{end}}
+  </section>
+
+  <div class="rbody">
+    <section class="card">
+      <h2>Ingredients</h2>
+      <form class="scale noprint" method="get" action="/recipes/{{.Recipe.ID}}">
+        <label>Servings <input type="number" name="servings" min="1" max="1000" value="{{.ServingsNow}}" inputmode="numeric"></label>
+        <label>Units
+          <select name="units">
+            <option value="original"{{if eq .UnitsMode "original"}} selected{{end}}>As written</option>
+            <option value="us"{{if eq .UnitsMode "us"}} selected{{end}}>US</option>
+            <option value="metric"{{if eq .UnitsMode "metric"}} selected{{end}}>Metric</option>
+          </select>
+        </label>
+        <button type="submit">Update</button>
+      </form>
+      {{if .Scaled}}<p class="note">Scaled from {{.Recipe.Servings}} serving{{if ne .Recipe.Servings 1}}s{{end}}. <a class="noprint" href="/recipes/{{.Recipe.ID}}?units={{.UnitsMode}}">Reset</a></p>{{end}}
+      <ul class="ingredients">{{range .Lines}}<li{{if .Heading}} class="heading"{{end}}>{{.Text}}</li>{{else}}<li class="note">None listed.</li>{{end}}</ul>
+    </section>
+    <section class="card">
+      <h2>Directions</h2>
+      <ol class="directions">{{range steps .Recipe.Directions}}<li{{if .Heading}} class="heading"{{end}}>{{.Text}}</li>{{else}}<li class="note">None listed.</li>{{end}}</ol>
+    </section>
+  </div>
+</article>
+{{end}}

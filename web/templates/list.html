@@ -1,0 +1,132 @@
+{{define "content"}}<div data-listroot data-version="{{.Version}}">
+<p class="notice sync" data-syncbanner role="status" hidden></p>
+{{with .List}}{{$stores := .Stores}}{{$filter := .Filter}}
+<div class="pagehead">
+  <h1>Shopping list</h1>
+  <div class="total" aria-live="polite">Spent so far <strong>{{.Spent}}</strong></div>
+</div>
+{{if $.Notice}}<p class="notice" role="status">{{$.Notice}}</p>{{end}}
+
+<nav class="storetabs" aria-label="Stores">
+  <a href="/list"{{if eq .Filter ""}} class="active"{{end}}>All stores</a>
+  {{range .Stores}}<a href="/list?store={{.ID}}"{{if eq $filter (printf "%d" .ID)}} class="active"{{end}}>{{.Name}}</a>{{end}}
+  <a href="/list?store=0"{{if eq .Filter "0"}} class="active"{{end}}>No store</a>
+  <a href="/stores" class="manage">Stores &amp; aisles</a>
+</nav>
+
+<details class="card tools">
+  <summary>Add meals, add an item, tidy up</summary>
+  <form method="post" action="/list/generate" class="inline">
+    <h2>Add planned meals</h2>
+    <label>From <input type="date" name="from" value="{{.From}}" required></label>
+    <label>To <input type="date" name="to" value="{{.To}}" required></label>
+    <button type="submit" class="primary">Add ingredients</button>
+    <span class="hint">Meals already added are skipped, so running this twice doesn't double anything.</span>
+  </form>
+  <form method="post" action="/list/items" class="inline">
+    <h2>Add an item</h2>
+    <label>Item <input type="text" name="name" required maxlength="200"></label>
+    <label>Amount <input type="text" name="quantity" inputmode="decimal" placeholder="2"></label>
+    <label>Unit <input type="text" name="unit" maxlength="30" placeholder="cup, lb, can"></label>
+    <label>Store <select name="store_id"><option value="0">Not yet</option>{{range .Stores}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></label>
+    <label>Note <input type="text" name="note" maxlength="500"></label>
+    <button type="submit" class="primary">Add</button>
+  </form>
+  <div class="actions">
+    <form method="post" action="/list/clear" data-confirm="Remove the purchased items?"><input type="hidden" name="which" value="bought"><button type="submit">Clear purchased</button></form>
+    <form method="post" action="/list/clear" data-confirm="Remove purchased items and items you already have?"><input type="hidden" name="which" value="done"><button type="submit">Clear purchased and “already have”</button></form>
+    <form method="post" action="/list/clear" data-confirm="Empty the whole list?"><input type="hidden" name="which" value="all"><button type="submit" class="danger">Empty the list</button></form>
+  </div>
+</details>
+
+{{if not .Groups}}<section class="card"><p>Nothing left to buy.{{if not $.List.Bought}} Add the week's meals above, or copy your <a href="/staples">staples</a>.{{end}}</p></section>{{end}}
+
+{{range .Groups}}
+<section class="storegroup">
+  <h2>{{.Name}}</h2>
+  {{range .Aisles}}
+  <div class="aislegroup">
+    <h3>{{if .Pos}}<span class="aislenum">{{.Pos}}</span> {{end}}{{.Name}}</h3>
+    <ul class="items">
+      {{range .Items}}{{template "item" .}}{{end}}
+    </ul>
+  </div>
+  {{end}}
+</section>
+{{end}}
+
+{{if .Have}}
+<section class="storegroup done">
+  <h2>Already have</h2>
+  <ul class="items">
+    {{range .Have}}
+    <li class="item">
+      <div class="itemmain"><span class="iname">{{.Name}}</span>{{with .Amount}} <span class="amt">{{.}}</span>{{end}}{{with .Note}} <span class="meta">{{.}}</span>{{end}}</div>
+      <form method="post" action="/list/items/{{.ID}}/state"><input type="hidden" name="state" value="need"><button type="submit">Move back</button></form>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+
+{{if .Bought}}
+<section class="storegroup done">
+  <h2>Purchased</h2>
+  <ul class="items">
+    {{range .Bought}}
+    <li class="item">
+      <div class="itemmain"><span class="iname">{{.Name}}</span>{{with .Amount}} <span class="amt">{{.}}</span>{{end}}
+        {{if .Purchases}}<span class="meta">{{.SpentTxt}}</span>{{end}}</div>
+      {{template "purchases" .}}
+      <form method="post" action="/list/items/{{.ID}}/state"><input type="hidden" name="state" value="need"><button type="submit">Move back</button></form>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+{{end}}</div>{{end}}
+
+{{define "purchases"}}
+{{if .Purchases}}<ul class="purchases">
+  {{range .Purchases}}
+  <li>{{if .WeightUnit}}{{printf "%.2f" .Weight}} {{.WeightUnit}} at {{money_c .PriceCents}}/{{.WeightUnit}}{{else}}{{printf "%g" .Quantity}} × {{money_c .PriceCents}}{{end}}{{with .Brand}} · {{.}}{{end}} = <strong>{{money_c .TotalCents}}</strong>
+    <form method="post" action="/list/purchases/{{.ID}}/delete"><button type="submit" class="link" aria-label="Remove this purchase">✕</button></form></li>
+  {{end}}
+</ul>{{end}}
+{{end}}
+
+{{define "item"}}
+<li class="item{{if .IsStaple}} staple{{end}}">
+  <div class="itemmain">
+    <span class="iname">{{.Name}}</span>{{with .Amount}} <span class="amt">{{.}}</span>{{end}}
+    {{with .Note}}<span class="meta">{{.}}</span>{{end}}
+    {{if .IsStaple}}<span class="flag" title="This is one of your staples">Staple: check there is enough</span>{{end}}
+  </div>
+  {{template "purchases" .}}
+  <div class="itemactions">
+    <details class="buy">
+      <summary class="btn primary">Bought</summary>
+      <form method="post" action="/list/items/{{.ID}}/purchase">
+        <label>How many <input type="text" name="quantity" value="{{.RemainingTxt}}" inputmode="decimal" required></label>
+        <label>Price <input type="text" name="price" value="{{.HintPrice}}" inputmode="decimal" placeholder="3.49" required></label>
+        <label>Priced
+          <select name="per">
+            <option value="">per package / each</option>
+            <option value="lb"{{if eq .HintPer "lb"}} selected{{end}}>per lb</option>
+            <option value="oz"{{if eq .HintPer "oz"}} selected{{end}}>per oz</option>
+            <option value="kg"{{if eq .HintPer "kg"}} selected{{end}}>per kg</option>
+            <option value="g"{{if eq .HintPer "g"}} selected{{end}}>per g</option>
+          </select>
+        </label>
+        <label>Weight bought <input type="text" name="weight" inputmode="decimal" placeholder="only for a price per weight"></label>
+        <label>Brand <input type="text" name="brand" value="{{.HintBrand}}" maxlength="80" list="brands-{{.ID}}"></label>
+        <datalist id="brands-{{.ID}}">{{range .Hints}}{{if .Brand}}<option value="{{.Brand}}">{{end}}{{end}}</datalist>
+        {{if .Hints}}<p class="hint">Last paid: {{range $i, $h := .Hints}}{{if $i}}; {{end}}{{if $h.Brand}}{{$h.Brand}} {{end}}{{money_c $h.PriceCents}}{{if $h.WeightUnit}}/{{$h.WeightUnit}}{{end}}{{end}}</p>{{end}}
+        <button type="submit" class="primary">Save purchase</button>
+      </form>
+    </details>
+    <form method="post" action="/list/items/{{.ID}}/state"><input type="hidden" name="state" value="have"><button type="submit">Have it</button></form>
+    <a class="btn" href="/list/items/{{.ID}}/edit">Edit</a>
+  </div>
+</li>
+{{end}}

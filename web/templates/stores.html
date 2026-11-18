@@ -1,0 +1,37 @@
+{{define "content"}}
+<div class="pagehead"><h1>Stores and aisles</h1><a href="/list">← Back to the list</a></div>
+<p class="note">The aisle number is the walking order. Aisles are also created when you give an item one on the list, and each store remembers which aisle each item is in.</p>
+
+<form class="card inline" method="post" action="/stores">
+  <label>New store <input type="text" name="name" required maxlength="80"></label>
+  <button type="submit" class="primary">Add store</button>
+</form>
+
+{{range .List.Stores}}
+<section class="card">
+  <form class="inline" method="post" action="/stores/{{.ID}}">
+    <label>Store <input type="text" name="name" value="{{.Name}}" required maxlength="80"></label>
+    <label>Order <input type="number" name="position" value="{{.Position}}" min="0" max="9999" inputmode="numeric"></label>
+    <button type="submit">Save</button>
+  </form>
+  <ul class="aisles">
+    {{range .Aisles}}
+    <li>
+      <form class="inline" method="post" action="/aisles/{{.ID}}">
+        <label>Number <input type="number" name="position" value="{{.Position}}" min="0" max="9999" inputmode="numeric"></label>
+        <label>Aisle <input type="text" name="name" value="{{.Name}}" required maxlength="80"></label>
+        <button type="submit">Save</button>
+      </form>
+      <form method="post" action="/aisles/{{.ID}}/delete" data-confirm="Delete this aisle? Items in it become unassigned."><button type="submit" class="link">Delete</button></form>
+    </li>
+    {{end}}
+  </ul>
+  <form class="inline" method="post" action="/stores/{{.ID}}/aisles">
+    <label>Number <input type="number" name="position" min="0" max="9999" inputmode="numeric" placeholder="next"></label>
+    <label>New aisle <input type="text" name="name" required maxlength="80" placeholder="Produce"></label>
+    <button type="submit" class="primary">Add aisle</button>
+  </form>
+  <form method="post" action="/stores/{{.ID}}/delete" data-confirm="Delete this store and its aisles?"><button type="submit" class="danger">Delete store</button></form>
+</section>
+{{else}}<section class="card"><p>No stores yet. Add the first above.</p></section>{{end}}
+{{end}}

@@ -1,0 +1,17 @@
+{{define "content"}}
+<section class="card narrow">
+  <h1>Two-step sign-in</h1>
+  {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+  <form method="post" action="/login/2fa" autocomplete="off">
+    <label>Code from your authenticator app, or a recovery code
+      <input type="text" name="code" inputmode="text" autocomplete="one-time-code" required autofocus maxlength="20">
+    </label>
+    <button type="submit" class="primary">Continue</button>
+  </form>
+  {{if .Form.passkeys}}<hr>
+  <p class="note">Or use a passkey instead.</p>
+  <button type="button" class="primary" data-passkey-login>Sign in with a passkey</button>
+  <p class="error" data-passkey-error role="alert" hidden></p>{{end}}
+  <p class="note"><a href="/login">Start over</a></p>
+</section>
+{{end}}

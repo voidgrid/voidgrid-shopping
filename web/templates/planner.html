@@ -1,0 +1,97 @@
+{{define "content"}}{{with .Planner}}{{$opts := .Options}}{{$start := .Start}}
+<div class="pagehead">
+  <h1>Planner</h1>
+  <div class="actions">
+    <a class="btn" href="/planner?start={{.Prev}}">← Previous</a>
+    <a class="btn" href="/planner?start={{.Today}}">This week</a>
+    <a class="btn" href="/planner?start={{.Next}}">Next →</a>
+  </div>
+</div>
+<p class="note">{{.Title}}</p>
+
+<div class="plannerwrap">
+  <div class="days">
+  {{range .Days}}{{$day := .}}
+    <section class="day{{if .Today}} today{{end}}" aria-label="{{.Weekday}} {{.Short}}">
+      <h2>{{.Weekday}} <span class="date">{{.Short}}</span></h2>
+      <div class="slots">
+        {{range .Slots}}
+        <div class="slot" data-date="{{.Date}}" data-slot="{{.Key}}">
+          <h3>{{.Label}}</h3>
+          <ul class="entries">
+            {{range .Entries}}{{$e := .}}
+            <li class="entry {{.Kind}}" draggable="true" data-entry="{{.ID}}">
+              <div class="etext">
+                {{if eq .Kind "recipe"}}<a href="/recipes/{{.RecipeID}}">{{.Title}}</a>
+                  <span class="meta">{{if .Servings}}{{.Servings}}{{else}}{{.RecipeServings}}{{end}} servings</span>
+                {{else if eq .Kind "leftovers"}}<strong>Leftovers</strong>
+                {{else}}{{.Note}}{{end}}
+              </div>
+              <details class="entrymenu">
+                <summary aria-label="Change this entry">⋯</summary>
+                <form method="post" action="/planner/entries/{{.ID}}">
+                  <label>Day <select name="date">{{range $opts}}<option value="{{.Value}}"{{if eq .Value $e.Date}} selected{{end}}>{{.Label}}</option>{{end}}</select></label>
+                  <label>Meal <select name="slot">{{range (index $opts 0).Slots}}<option value="{{.Value}}"{{if eq .Value $e.Slot}} selected{{end}}>{{.Label}}</option>{{end}}</select></label>
+                  {{if eq .Kind "recipe"}}<label>Servings <input type="number" name="servings" min="1" max="1000" value="{{if .Servings}}{{.Servings}}{{else}}{{.RecipeServings}}{{end}}" inputmode="numeric"></label>{{end}}
+                  {{if eq .Kind "note"}}<label>Note <input type="text" name="note" value="{{.Note}}" maxlength="500"></label>{{end}}
+                  <button type="submit" class="primary">Save</button>
+                </form>
+                <form method="post" action="/planner/entries/{{.ID}}/delete"><button type="submit" class="danger">Remove</button></form>
+              </details>
+            </li>
+            {{end}}
+          </ul>
+          {{range .Prep}}<p class="prep">Prep: {{.Text}} <span class="meta">({{.Date}})</span></p>{{end}}
+          <div class="slotactions">
+            <a href="/planner/add?date={{.Date}}&amp;slot={{.Key}}">+ Add</a>
+            <form method="post" action="/planner/entries">
+              <input type="hidden" name="date" value="{{.Date}}"><input type="hidden" name="slot" value="{{.Key}}">
+              <input type="hidden" name="kind" value="leftovers">
+              <button type="submit" class="link">Leftovers</button>
+            </form>
+          </div>
+        </div>
+        {{end}}
+      </div>
+      <div class="daynotes">
+        <h3>Notes</h3>
+        <ul>
+          {{range .Notes}}
+          <li><span>{{.Text}}{{if .ForLabel}} <span class="meta">for {{.ForLabel}}</span>{{end}}</span>
+            <form method="post" action="/planner/notes/{{.ID}}/delete"><input type="hidden" name="back" value="{{$start}}"><button type="submit" class="link" aria-label="Delete this note">✕</button></form></li>
+          {{end}}
+        </ul>
+        <details class="notenew">
+          <summary>+ Note</summary>
+          <form method="post" action="/planner/notes">
+            <input type="hidden" name="date" value="{{$day.Date}}">
+            <label>Note <input type="text" name="text" maxlength="500" required placeholder="Thaw the chicken"></label>
+            <label>For meal
+              <select name="for"><option value="">Not tied to a meal</option>
+              {{range $opts}}{{$d := .}}<optgroup label="{{.Label}}">{{range .Slots}}<option value="{{$d.Value}}|{{.Value}}">{{.Label}}</option>{{end}}</optgroup>{{end}}
+              </select>
+            </label>
+            <button type="submit" class="primary">Add note</button>
+          </form>
+        </details>
+      </div>
+    </section>
+  {{end}}
+  </div>
+
+  <aside class="sidebar noprint" aria-label="Recipes to add">
+    <h2>Recipes</h2>
+    <form method="get" action="/planner">
+      <input type="hidden" name="start" value="{{.Start}}">
+      <input type="text" name="rq" value="{{.SidebarQ}}" placeholder="Search recipes" aria-label="Search recipes">
+    </form>
+    <p class="note hint-drag">Drag a recipe onto a meal, or use +.</p>
+    <ul class="sidelist">
+      {{range .Sidebar}}
+      <li draggable="true" data-recipe="{{.ID}}"><a class="sidetitle" href="/recipes/{{.ID}}">{{.Title}}</a>
+        <a class="addlink" href="/planner/add?recipe_id={{.ID}}" aria-label="Add {{.Title}} to the plan">+</a></li>
+      {{else}}<li class="note">No recipes found.</li>{{end}}
+    </ul>
+  </aside>
+</div>
+{{end}}{{end}}

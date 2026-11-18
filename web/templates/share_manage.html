@@ -1,0 +1,31 @@
+{{define "content"}}
+<div class="pagehead"><a href="/recipes/{{.Recipe.ID}}">← {{.Recipe.Title}}</a></div>
+<h1>Share this recipe</h1>
+{{if .Notice}}<p class="notice" role="status">{{.Notice}}</p>{{end}}
+{{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+{{if .Share.NewLink}}
+<section class="card">
+  <h2>Your link</h2>
+  <input type="text" readonly value="{{.Share.NewLink}}" aria-label="Link" data-select>
+  <p class="note">Anyone who has it can read this recipe (title, photo, ingredients, directions) until it expires. They can't sign in or see anything else. Withdraw it below at any time.</p>
+</section>
+{{end}}
+<section class="card">
+  <h2>New link</h2>
+  <form method="post" action="/recipes/{{.Recipe.ID}}/share">
+    <label>Works for (days) <input type="number" name="days" value="{{.Share.Days}}" min="1" max="365" required inputmode="numeric">
+      <span class="hint">1 to 365. The link stops working after this, whatever happens.</span></label>
+    <button type="submit" class="primary">Create link</button>
+  </form>
+</section>
+{{if .Share.Rows}}
+<section class="card">
+  <h2>Links that work now</h2>
+  <ul class="plain">{{range .Share.Rows}}
+    <li class="userrow"><div>Made {{.Created.Format "2006-01-02"}} <span class="note">expires {{.Expires.Format "2006-01-02 15:04"}} UTC</span></div>
+      {{if .Mine}}<form method="post" action="/recipes/{{$.Recipe.ID}}/share/revoke" data-confirm="Withdraw this link? It stops working at once."><input type="hidden" name="hash" value="{{.Hash}}"><button type="submit" class="danger">Withdraw</button></form>{{end}}</li>
+  {{end}}</ul>
+  <p class="note">Links can't be shown again after they are created; make a new one if you lose it.</p>
+</section>
+{{end}}
+{{end}}

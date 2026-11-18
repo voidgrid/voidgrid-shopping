@@ -1,0 +1,32 @@
+{{define "content"}}
+<div class="pagehead"><h1>Edit item</h1><a href="/list">← Back to the list</a></div>
+<form class="card" method="post" action="/list/items/{{.Item.ID}}">
+  <label>Item <input type="text" name="name" value="{{.Form.name}}" required maxlength="200"></label>
+  <div class="filtergrid">
+    <label>Amount <input type="text" name="quantity" value="{{.Form.quantity}}" inputmode="decimal" placeholder="1"></label>
+    <label>Unit <input type="text" name="unit" value="{{.Form.unit}}" maxlength="30" placeholder="gallon, lb, can"></label>
+    <label>Store
+      <select name="store_id"><option value="0">Not yet</option>
+        {{range .List.Stores}}<option value="{{.ID}}"{{if eq (printf "%d" .ID) $.Form.store_id}} selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+    </label>
+    <label>Aisle
+      <select name="aisle_id"><option value="0">Not yet</option>
+        {{range .List.Stores}}{{$st := .}}{{range .Aisles}}<option value="{{.ID}}"{{if eq (printf "%d" .ID) $.Form.aisle_id}} selected{{end}}>{{$st.Name}} · {{.Position}}. {{.Name}}</option>{{end}}{{end}}
+      </select>
+      <span class="hint">Picking an aisle sets its store.</span>
+    </label>
+    <label>Or a new aisle <input type="text" name="new_aisle" maxlength="80" placeholder="in the store chosen above">
+      <span class="hint">The store and aisle are remembered for this item.</span></label>
+  </div>
+  <label>Note <input type="text" name="note" value="{{.Form.note}}" maxlength="500"></label>
+  {{if .Item.Pack}}<p class="note">Each package is {{.Item.Pack}}.</p>{{end}}
+  <div class="actions">
+    <button type="submit" class="primary">Save</button>
+    <a class="btn" href="/list">Cancel</a>
+  </div>
+</form>
+<form class="card" method="post" action="/list/items/{{.Item.ID}}/delete" data-confirm="Remove this item from the list?">
+  <button type="submit" class="danger">Remove from the list</button>
+</form>
+{{end}}

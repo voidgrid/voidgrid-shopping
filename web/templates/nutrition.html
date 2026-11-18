@@ -1,0 +1,51 @@
+{{define "content"}}{{with .Nut}}
+<div class="pagehead"><h1>Nutrition</h1><a href="/recipes/{{.Recipe.ID}}">← {{.Recipe.Title}}</a></div>
+
+{{if .Box}}
+<section class="card nutbox">
+  <h2>Per serving</h2>
+  <p class="macros"><strong>{{.Box.Kcal}}</strong> kcal · <strong>{{.Box.Protein}}</strong> g protein · <strong>{{.Box.Carbs}}</strong> g carbs · <strong>{{.Box.Fat}}</strong> g fat</p>
+  <p class="note">{{.Box.Note}}{{if .Recipe.Servings}} · {{.Recipe.Servings}} servings{{end}}</p>
+</section>
+{{else}}
+<section class="card"><p class="note">No figures yet. Choose a food for each ingredient below, or enter the nutrition by hand.</p></section>
+{{end}}
+{{if not .Recipe.Servings}}<p class="error">This recipe has no servings number, so there is no per-serving figure. Set it by editing the recipe.</p>{{end}}
+
+<section class="card">
+  <h2>Ingredients</h2>
+  <p class="note">Each ingredient takes its nutrition from one food you choose; the choice is remembered for every recipe that uses the same ingredient. Nothing is matched by guessing.</p>
+  <ul class="nutlines">
+    {{range .Lines}}
+    <li class="nutline {{.Status}}">
+      <div class="ntext">
+        <span class="nname">{{.Text}}</span>
+        {{if eq .Status "counted"}}<span class="meta">{{.GramsText}} · {{.Kcal}} · from {{.Food}}</span>{{end}}
+        {{if eq .Status "unconvertible"}}<span class="meta warn">{{.Why}}</span>{{end}}
+        {{if eq .Status "skipped"}}<span class="meta">No amount, not counted.</span>{{end}}
+      </div>
+      {{if ne .Status "skipped"}}
+      <a class="btn{{if or (eq .Status "unlinked") (eq .Status "unconvertible")}} primary{{end}}" href="/nutrition/link?key={{qe .Key}}&amp;recipe={{$.Recipe.ID}}">{{if eq .Status "unlinked"}}Choose food{{else}}Change{{end}}</a>
+      {{end}}
+    </li>
+    {{else}}<li class="note">This recipe has no ingredients.</li>{{end}}
+  </ul>
+  {{with .TotalTxt}}<p class="note">{{.}}.</p>{{end}}
+</section>
+
+<form class="card" method="post" action="/recipes/{{.Recipe.ID}}/nutrition">
+  <h2>Set by hand</h2>
+  <p class="note">Enter the figures per serving, for example from the original recipe. They replace the calculated ones.</p>
+  <div class="filtergrid">
+    <label>Calories <input type="text" name="kcal" value="{{index $.Form "kcal"}}" inputmode="decimal"></label>
+    <label>Protein (g) <input type="text" name="protein" value="{{index $.Form "protein"}}" inputmode="decimal"></label>
+    <label>Carbs (g) <input type="text" name="carbs" value="{{index $.Form "carbs"}}" inputmode="decimal"></label>
+    <label>Fat (g) <input type="text" name="fat" value="{{index $.Form "fat"}}" inputmode="decimal"></label>
+  </div>
+  <div class="actions">
+    <button type="submit" class="primary">Save</button>
+    {{if .Override}}<button type="submit" name="clear" value="1">Use the calculated figures</button>{{end}}
+  </div>
+</form>
+<p class="note">Nutrition data: USDA FoodData Central (public domain) and Open Food Facts (ODbL), where you chose them.</p>
+{{end}}{{end}}

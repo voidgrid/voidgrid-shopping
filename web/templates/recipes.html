@@ -1,0 +1,91 @@
+{{define "content"}}
+<div class="pagehead">
+  <h1>Recipes</h1>
+  <div class="actions">
+    <a class="btn primary" href="/recipes/new">New recipe</a>
+    <a class="btn" href="/recipes/import">Import</a>
+  </div>
+</div>
+
+<form class="filters card" method="get" action="/recipes">
+  <label class="wide">Search
+    <input type="text" name="q" value="{{.Form.q}}" placeholder="Title, ingredients, directions" autocomplete="off">
+  </label>
+  <details class="more"{{if .Filtered}} open{{end}}>
+  <summary>More filters</summary>
+  <div class="filtergrid">
+    <label>Course
+      <select name="course"><option value="">Any</option>
+      {{range .Facets.Courses}}<option{{if eq . $.Form.course}} selected{{end}}>{{.}}</option>{{end}}</select>
+    </label>
+    <label>Cuisine
+      <select name="cuisine"><option value="">Any</option>
+      {{range .Facets.Cuisines}}<option{{if eq . $.Form.cuisine}} selected{{end}}>{{.}}</option>{{end}}</select>
+    </label>
+    <label>Main ingredient
+      <select name="main"><option value="">Any</option>
+      {{range .Facets.Mains}}<option{{if eq . $.Form.main}} selected{{end}}>{{.}}</option>{{end}}</select>
+    </label>
+    <label>Tag
+      <select name="tag"><option value="">Any</option>
+      {{range .Facets.Tags}}<option{{if eq . $.Form.tag}} selected{{end}}>{{.}}</option>{{end}}</select>
+    </label>
+    <label>Rating at least
+      <select name="rating"><option value="">Any</option>
+      {{range seq 5}}<option value="{{.}}"{{if eq (printf "%d" .) $.Form.rating}} selected{{end}}>{{.}} star{{if gt . 1}}s{{end}}</option>{{end}}</select>
+    </label>
+    <label>Total time up to (min)
+      <input type="number" name="time" min="1" value="{{.Form.time}}" inputmode="numeric">
+    </label>
+    <label>Has any of
+      <input type="text" name="any" value="{{.Form.any}}" placeholder="chicken, beef">
+    </label>
+    <label>Has all of
+      <input type="text" name="all" value="{{.Form.all}}" placeholder="garlic, onion">
+    </label>
+    <label>Without
+      <input type="text" name="without" value="{{.Form.without}}" placeholder="mushrooms">
+    </label>
+    <label>Sort
+      <select name="sort">
+        <option value="">Title</option>
+        <option value="newest"{{if eq .Form.sort "newest"}} selected{{end}}>Newest</option>
+        <option value="rating"{{if eq .Form.sort "rating"}} selected{{end}}>Rating</option>
+        <option value="time"{{if eq .Form.sort "time"}} selected{{end}}>Quickest</option>
+      </select>
+    </label>
+  </div>
+  </details>
+  <div class="actions">
+    <button type="submit" class="primary">Search</button>
+    {{if .Filtered}}<a class="btn" href="/recipes">Clear</a>{{end}}
+    <a class="btn" href="/recipes/random{{if .RandomQuery}}?{{.RandomQuery}}{{end}}">Random recipe</a>
+  </div>
+</form>
+
+<p class="note">{{len .Cards}} recipe{{if ne (len .Cards) 1}}s{{end}}{{if .Filtered}} match{{end}}</p>
+
+{{if .Cards}}
+<ul class="grid">
+  {{range .Cards}}{{$r := .Rating}}
+  <li class="rcard">
+    <a href="/recipes/{{.ID}}">
+      {{if .Photo}}<img src="/photos/{{.Photo}}" alt="" loading="lazy">{{else}}<div class="nophoto" aria-hidden="true"></div>{{end}}
+      <span class="rtitle">{{.Title}}</span>
+    </a>
+    <span class="rmeta">
+      {{if .Rating}}<span class="stars" aria-label="{{.Rating}} of 5 stars">{{range seq 5}}{{if le . $r}}★{{else}}☆{{end}}{{end}}</span>{{end}}
+      {{with mins .TotalMin}}<span>{{.}}</span>{{end}}
+      {{with .Course}}<span>{{.}}</span>{{end}}
+    </span>
+  </li>
+  {{end}}
+</ul>
+{{else if not .Filtered}}
+<section class="card">
+  <p>No recipes yet. Add one by hand, or import your Plan to Eat export.</p>
+</section>
+{{else}}
+<section class="card"><p>Nothing matches those filters.</p></section>
+{{end}}
+{{end}}

@@ -1,0 +1,18 @@
+{{define "content"}}
+<div class="pagehead"><h1>Edit staple</h1><a href="/staples">← Back to staples</a></div>
+<form class="card" method="post" action="/staples/{{.Staple.ID}}">
+  <label>Item <input type="text" name="name" value="{{.Form.name}}" required maxlength="200"></label>
+  <div class="filtergrid">
+    <label>Amount <input type="text" name="quantity" value="{{.Form.quantity}}" inputmode="decimal"></label>
+    <label>Unit <input type="text" name="unit" value="{{.Form.unit}}" maxlength="30"></label>
+    <label>Store
+      <select name="store_id"><option value="0">Not yet</option>
+        {{range .List.Stores}}<option value="{{.ID}}"{{if eq (printf "%d" .ID) $.Form.store_id}} selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+    </label>
+  </div>
+  <label>Note <input type="text" name="note" value="{{.Form.note}}" maxlength="500"></label>
+  <div class="actions"><button type="submit" class="primary">Save</button><a class="btn" href="/staples">Cancel</a></div>
+</form>
+<form class="card" method="post" action="/staples/{{.Staple.ID}}/delete" data-confirm="Delete this staple?"><button type="submit" class="danger">Delete staple</button></form>
+{{end}}

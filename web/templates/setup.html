@@ -1,0 +1,24 @@
+{{define "content"}}
+<section class="card narrow">
+  <h1>Create the admin account</h1>
+  <p class="note">This runs once. The first account is the administrator and can invite everyone else.</p>
+  {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+  <form method="post" action="/setup" autocomplete="on">
+    <input type="hidden" name="token" value="{{.SetupToken}}">
+    <label>Your name
+      <input type="text" name="name" value="{{index .Form "name"}}" autocomplete="name" required>
+    </label>
+    <label>Email
+      <input type="email" name="email" value="{{index .Form "email"}}" autocomplete="username" required>
+    </label>
+    <label>Password
+      <input type="password" name="password" autocomplete="new-password" minlength="12" required>
+      <span class="hint">At least 12 characters.</span>
+    </label>
+    <label>Repeat the password
+      <input type="password" name="confirm" autocomplete="new-password" minlength="12" required>
+    </label>
+    <button type="submit" class="primary">Create account</button>
+  </form>
+</section>
+{{end}}

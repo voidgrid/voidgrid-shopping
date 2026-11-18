@@ -1,0 +1,52 @@
+{{define "content"}}
+<div class="pagehead"><h1>Add to the plan</h1><a href="/planner{{if .Form.date}}?start={{.Form.date}}{{end}}">← Back to the planner</a></div>
+
+{{if .Recipe.ID}}
+<form class="card" method="post" action="/planner/entries">
+  <h2>{{.Recipe.Title}}</h2>
+  <input type="hidden" name="recipe_id" value="{{.Recipe.ID}}">
+  <div class="filtergrid">
+    <label>Day
+      <select name="date">{{range .Planner.Options}}<option value="{{.Value}}"{{if eq .Value $.Form.date}} selected{{end}}>{{.Label}}</option>{{end}}</select>
+    </label>
+    <label>Meal
+      <select name="slot">
+        <option value="breakfast"{{if eq .Form.slot "breakfast"}} selected{{end}}>Breakfast</option>
+        <option value="lunch"{{if eq .Form.slot "lunch"}} selected{{end}}>Lunch</option>
+        <option value="snack"{{if eq .Form.slot "snack"}} selected{{end}}>Snack</option>
+        <option value="dinner"{{if eq .Form.slot "dinner"}} selected{{end}}>Dinner</option>
+      </select>
+    </label>
+    <label>Servings
+      <input type="number" name="servings" min="1" max="1000" value="{{.Recipe.Servings}}" inputmode="numeric">
+    </label>
+  </div>
+  <button type="submit" class="primary">Add</button>
+</form>
+{{else}}
+<form class="card" method="get" action="/planner/add">
+  <input type="hidden" name="date" value="{{.Form.date}}"><input type="hidden" name="slot" value="{{.Form.slot}}">
+  <label>Find a recipe <input type="text" name="q" value="{{.Planner.SidebarQ}}" placeholder="Search" autocomplete="off"></label>
+  <button type="submit">Search</button>
+</form>
+<form class="card" method="post" action="/planner/entries">
+  <h2>A note for this meal</h2>
+  <input type="hidden" name="date" value="{{.Form.date}}"><input type="hidden" name="slot" value="{{.Form.slot}}">
+  <input type="hidden" name="kind" value="note">
+  <label>Note <input type="text" name="note" maxlength="500" required placeholder="Takeout, eating at Mom's ..."></label>
+  <button type="submit" class="primary">Add note</button>
+</form>
+<ul class="pickgrid">
+  {{range .Planner.Sidebar}}
+  <li class="card">
+    <form method="post" action="/planner/entries">
+      <input type="hidden" name="date" value="{{$.Form.date}}"><input type="hidden" name="slot" value="{{$.Form.slot}}">
+      <input type="hidden" name="recipe_id" value="{{.ID}}">
+      <strong>{{.Title}}</strong>
+      <button type="submit" class="primary">Add</button>
+    </form>
+  </li>
+  {{else}}<li class="note">No recipes found.</li>{{end}}
+</ul>
+{{end}}
+{{end}}

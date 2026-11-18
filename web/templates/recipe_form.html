@@ -1,0 +1,89 @@
+{{define "content"}}
+<h1>{{.Title}}</h1>
+{{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+<form class="card" method="post" action="{{.FormAction}}" enctype="multipart/form-data">
+  <label>Title
+    <input type="text" name="title" value="{{.Form.title}}" required maxlength="200">
+    {{with .Errors.title}}<span class="error">{{.}}</span>{{end}}
+  </label>
+  <div class="filtergrid">
+    <label>Course <input type="text" name="course" value="{{.Form.course}}" maxlength="200" placeholder="Dinner Main Course"></label>
+    <label>Cuisine <input type="text" name="cuisine" value="{{.Form.cuisine}}" maxlength="200"></label>
+    <label>Main ingredient <input type="text" name="main" value="{{.Form.main}}" maxlength="200"></label>
+    <label>Servings <input type="number" name="servings" value="{{.Form.servings}}" min="0" inputmode="numeric">
+      {{with .Errors.servings}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Prep time (min) <input type="number" name="prep" value="{{.Form.prep}}" min="0" inputmode="numeric">
+      {{with .Errors.prep}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Cook time (min) <input type="number" name="cook" value="{{.Form.cook}}" min="0" inputmode="numeric">
+      {{with .Errors.cook}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Total time (min) <input type="number" name="total" value="{{.Form.total}}" min="0" inputmode="numeric">
+      <span class="hint">Left empty, prep plus cook.</span>
+      {{with .Errors.total}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Yield <input type="text" name="yield" value="{{.Form.yield}}" maxlength="200" placeholder="12 muffins"></label>
+  </div>
+  <label>Website
+    <input type="url" name="url" value="{{.Form.url}}" maxlength="2000" placeholder="https://">
+    {{with .Errors.url}}<span class="error">{{.}}</span>{{end}}
+  </label>
+  <label>Source name <input type="text" name="source" value="{{.Form.source}}" maxlength="200" placeholder="Grandma, a cookbook, a site"></label>
+  <label>Tags <input type="text" name="tags" value="{{.Form.tags}}" placeholder="Pancakes, Sandwiches">
+    <span class="hint">Separate with commas.</span></label>
+  <label>Description <textarea name="description" rows="3">{{.Form.description}}</textarea></label>
+  <fieldset class="rows" data-rows>
+    <legend>Ingredients</legend>
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab on" data-tab="lines">Line-item input</button>
+      <button type="button" class="tab" data-tab="bulk">Bulk input</button>
+    </div>
+    <input type="hidden" name="ing_mode" value="lines">
+    <div data-pane="lines">
+      <div class="rowhead"><span>Amount</span><span>Unit</span><span>Ingredient</span><span>Notes</span></div>
+      <div class="rowlist">{{range .IngRows}}{{template "ingrow" .}}{{end}}</div>
+      <div class="actions">
+        <button type="button" data-add="i">+ Add ingredient</button>
+        <button type="button" data-add="s">+ Add heading</button>
+      </div>
+      <template data-tpl="i">{{template "ingrow" blankrow false}}</template>
+      <template data-tpl="s">{{template "ingrow" blankrow true}}</template>
+    </div>
+    <div data-pane="bulk" hidden>
+      <textarea name="ingredients" rows="10" spellcheck="false" disabled>{{.Form.ingredients}}</textarea>
+      <span class="hint">One per line, for example “2 cups flour”. A line ending in a colon, like “For the sauce:”, is a heading.</span>
+    </div>
+  </fieldset>
+  <label>Directions <textarea name="directions" rows="10">{{.Form.directions}}</textarea>
+    <span class="hint">One step per line. A line ending in a colon, like “For the sauce:”, is a heading.</span></label>
+  <label>Photo address <input type="url" name="photo_src" value="{{.Form.photo_src}}" maxlength="2000" placeholder="https://… (or upload below)">
+    {{with .Errors.photo_src}}<span class="error">{{.}}</span>{{end}}
+    <span class="hint">The picture is copied here when you save.</span></label>
+  <label>Photo upload
+    <input type="file" name="photo" accept="image/jpeg,image/png,image/gif,image/webp">
+    {{with .Errors.photo}}<span class="error">{{.}}</span>{{end}}
+    {{if .Recipe.Photo}}<span class="hint">A photo is set; choosing another replaces it.</span>{{end}}
+  </label>
+  {{if .Recipe.Photo}}<label class="check"><input type="checkbox" name="remove_photo" value="1"> Remove the current photo</label>{{end}}
+  <div class="actions">
+    <button type="submit" class="primary">Save</button>
+    <a class="btn" href="{{if .Recipe.ID}}/recipes/{{.Recipe.ID}}{{else}}/recipes{{end}}">Cancel</a>
+  </div>
+</form>
+{{if .Recipe.ID}}
+<form class="card" method="post" action="/recipes/{{.Recipe.ID}}/delete" data-confirm="Delete this recipe? This can't be undone.">
+  <h2>Delete</h2>
+  <p class="note">Removes the recipe and its photo.</p>
+  <button type="submit" class="danger">Delete recipe</button>
+</form>
+{{end}}
+{{end}}
+{{define "ingrow"}}<div class="row{{if .Sep}} sep{{end}}">
+  <span class="grip" aria-hidden="true">⋮⋮</span>
+  <input type="hidden" name="ing_k" value="{{if .Sep}}s{{else}}i{{end}}">
+  {{if .Sep}}<input type="hidden" name="ing_a" value=""><input type="hidden" name="ing_u" value="">
+  <input type="text" class="wide" name="ing_n" value="{{.Name}}" maxlength="200" placeholder="Heading, e.g. For the sauce" aria-label="Heading">
+  <input type="hidden" name="ing_x" value="">{{else}}
+  <input type="text" class="amt" name="ing_a" value="{{.Amount}}" maxlength="30" aria-label="Amount" inputmode="text" autocomplete="off">
+  <input type="text" class="unit" name="ing_u" value="{{.Unit}}" maxlength="30" aria-label="Unit" autocomplete="off">
+  <input type="text" class="name" name="ing_n" value="{{.Name}}" maxlength="200" aria-label="Ingredient" autocomplete="off">
+  <input type="text" class="note" name="ing_x" value="{{.Note}}" maxlength="200" aria-label="Notes" autocomplete="off">{{end}}
+  <span class="rowbtns"><button type="button" data-move="-1" aria-label="Move up">↑</button><button type="button" data-move="1" aria-label="Move down">↓</button><button type="button" data-del aria-label="Remove">✕</button></span>
+</div>{{end}}

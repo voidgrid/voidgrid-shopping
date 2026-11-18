@@ -1,0 +1,63 @@
+{{define "content"}}
+<h1>Account</h1>
+{{if .Notice}}<p class="notice" role="status">{{.Notice}}</p>{{end}}
+{{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+{{if .Acct.NewRecovery}}
+<section class="card">
+  <h2>Recovery codes</h2>
+  <p class="note">Each code works once if you lose your phone. Store them somewhere safe; they are not shown again.</p>
+  <ul class="codes">{{range .Acct.NewRecovery}}<li><code>{{.}}</code></li>{{end}}</ul>
+</section>
+{{end}}
+<section class="card">
+  <h2>Password</h2>
+  {{if .Acct.HasPassword}}
+  <form method="post" action="/account/password">
+    <label>Current password <input type="password" name="current" required autocomplete="current-password"></label>
+    <label>New password <input type="password" name="password" required autocomplete="new-password"></label>
+    <label>Repeat new password <input type="password" name="confirm" required autocomplete="new-password"></label>
+    <button type="submit" class="primary">Change password</button>
+  </form>
+  {{else}}<p class="note">This account signs in through single sign-on and has no password.</p>{{end}}
+</section>
+<section class="card">
+  <h2>Two-step codes (authenticator app)</h2>
+  {{if .Acct.Setup}}
+    <p class="note">Scan this with an authenticator app (or type the key), then enter the 6-digit code it shows.</p>
+    <img src="{{.Acct.SetupQR}}" width="220" height="220" alt="QR code for the authenticator app">
+    <p>Key: <code>{{.Acct.SetupSecret}}</code></p>
+    <form method="post" action="/account/totp/confirm" autocomplete="off">
+      <label>Code <input type="text" name="code" inputmode="numeric" pattern="[0-9 ]*" maxlength="7" required autofocus autocomplete="one-time-code"></label>
+      <button type="submit" class="primary">Turn on</button>
+    </form>
+  {{else if .Acct.TOTPOn}}
+    <p>On. {{.Acct.Recovery}} recovery code{{if ne .Acct.Recovery 1}}s{{end}} left.</p>
+    {{if .Acct.HasPassword}}<form method="post" action="/account/totp/recovery">
+      <label>Password <input type="password" name="current" required autocomplete="current-password"></label>
+      <button type="submit">New recovery codes</button>
+    </form>
+    <form method="post" action="/account/totp/disable" data-confirm="Turn off two-step codes?">
+      <label>Password <input type="password" name="current" required autocomplete="current-password"></label>
+      <button type="submit" class="danger">Turn off</button>
+    </form>{{end}}
+  {{else}}
+    <p class="note">Optional. Adds a code from an app on your phone after the password.</p>
+    {{if .Acct.NoKey}}<p class="error">The server has no encryption key (VGS_SECRET_KEY), so this can't be turned on yet.</p>
+    {{else}}<form method="post" action="/account/totp/start"><button type="submit">Set up two-step codes</button></form>{{end}}
+  {{end}}
+</section>
+<section class="card">
+  <h2>Passkeys</h2>
+  <p class="note">Optional. A passkey (fingerprint, face or device PIN) signs you in without typing a password.</p>
+  {{range .Acct.Passkeys}}
+  <form method="post" action="/account/passkeys/delete" class="userrow" data-confirm="Remove this passkey?">
+    <div>{{.Name}}</div><input type="hidden" name="id" value="{{.ID}}"><button type="submit" class="danger">Remove</button>
+  </form>
+  {{end}}
+  {{if .Acct.CanPasskeys}}
+  <label>Name for this passkey <input type="text" id="passkey-name" maxlength="60" placeholder="Phone"></label>
+  <button type="button" data-passkey-register>Add a passkey</button>
+  <p class="error" data-passkey-error role="alert" hidden></p>
+  {{else}}<p class="note">{{.Acct.PasskeyIssue}}</p>{{end}}
+</section>
+{{end}}

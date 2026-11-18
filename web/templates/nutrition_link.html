@@ -1,0 +1,95 @@
+{{define "content"}}{{with .Link}}{{$link := .}}
+<div class="pagehead"><h1>Food for “{{.Key}}”</h1><a href="{{if .Recipe}}/recipes/{{.Recipe}}/nutrition{{else}}/recipes{{end}}">← Back</a></div>
+{{if $.Notice}}<p class="notice" role="status">{{$.Notice}}</p>{{end}}
+
+{{if .Current}}
+<section class="card">
+  <h2>Now</h2>
+  <p><strong>{{.Current.Name}}</strong> <span class="meta">{{.Current.Source}} · {{n0 .Current.Per100.Kcal}} kcal per 100 g</span></p>
+  <form class="inline" method="post" action="/nutrition/link">
+    <input type="hidden" name="key" value="{{.Key}}"><input type="hidden" name="recipe" value="{{.Recipe}}">
+    <input type="hidden" name="source" value="{{.CurrentOn.Source}}">
+    <input type="hidden" name="fdc_id" value="{{.CurrentOn.FdcID}}"><input type="hidden" name="record_id" value="{{.CurrentOn.RecordID}}"><input type="hidden" name="barcode" value="{{.CurrentOn.Barcode}}">
+    <label>One each weighs (g)<input type="text" name="unit_g" value="{{if .CurrentOn.UnitG}}{{n1 .CurrentOn.UnitG}}{{end}}" inputmode="decimal" placeholder="for “2 eggs”, “1 slice”"></label>
+    <button type="submit">Save weight</button>
+  </form>
+  <form method="post" action="/nutrition/unlink"><input type="hidden" name="key" value="{{.Key}}"><input type="hidden" name="recipe" value="{{.Recipe}}"><button type="submit" class="danger">Forget this choice</button></form>
+</section>
+{{end}}
+
+<section class="card">
+  <h2>Look in the USDA database</h2>
+  {{if not .USDAReady}}<p class="note">The USDA data isn't loaded with nutrition yet. Run <code>voidgrid-shopping admin import-usda &lt;file&gt;</code> (see Settings).</p>{{else}}
+  <form class="inline" method="get" action="/nutrition/link">
+    <input type="hidden" name="key" value="{{.Key}}"><input type="hidden" name="recipe" value="{{.Recipe}}">
+    <label>Search <input type="text" name="q" value="{{.Q}}" placeholder="e.g. wheat flour, cheddar" autocomplete="off"></label>
+    <button type="submit" class="primary">Search</button>
+  </form>
+  {{if .Q}}
+    {{if .Hits}}<p class="hint">Foods whose name has every word. Pick the one that is your ingredient.</p>
+    <ul class="hits">
+      {{range .Hits}}
+      <li>
+        <form method="post" action="/nutrition/link">
+          <input type="hidden" name="key" value="{{$link.Key}}"><input type="hidden" name="recipe" value="{{$link.Recipe}}">
+          <input type="hidden" name="source" value="usda"><input type="hidden" name="fdc_id" value="{{.FdcID}}">
+          <span class="hname">{{.Description}}</span>
+          <span class="meta">{{n0 .Per100.Kcal}} kcal · {{n1 .Per100.Protein}} g protein · {{n1 .Per100.Carbs}} g carbs · {{n1 .Per100.Fat}} g fat per 100 g</span>
+          <button type="submit">Use</button>
+        </form>
+      </li>
+      {{end}}
+    </ul>
+    {{else}}<p class="note">No USDA food has all those words. Try fewer words, or enter it by hand below.</p>{{end}}
+  {{end}}
+  {{end}}
+</section>
+
+<section class="card" data-scan>
+  <h2>Scan a package</h2>
+  <p class="note">Point the camera at the barcode. The number is looked up in Open Food Facts, and only the number is sent.</p>
+  <video class="scanview" playsinline muted hidden></video>
+  <p class="note scanmsg" hidden></p>
+  <form class="inline" method="post" action="/nutrition/barcode">
+    <input type="hidden" name="key" value="{{.Key}}"><input type="hidden" name="recipe" value="{{.Recipe}}">
+    <label>Barcode number <input type="text" name="barcode" inputmode="numeric" pattern="[0-9]{8,14}" placeholder="8 to 14 digits"></label>
+    <button type="button" class="scanstart">Scan with the camera</button>
+    <button type="submit" class="primary">Look up</button>
+  </form>
+</section>
+
+{{if .Records}}
+<section class="card">
+  <h2>Foods you entered</h2>
+  <ul class="hits">
+    {{range .Records}}
+    <li>
+      <form method="post" action="/nutrition/link">
+        <input type="hidden" name="key" value="{{$link.Key}}"><input type="hidden" name="recipe" value="{{$link.Recipe}}">
+        <input type="hidden" name="source" value="manual"><input type="hidden" name="record_id" value="{{.ID}}">
+        <span class="hname">{{.Name}}</span>
+        <span class="meta">{{n0 .Per100.Kcal}} kcal per 100 g</span>
+        <button type="submit">Use</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+
+<form class="card" method="post" action="/nutrition/foods">
+  <h2>Enter it by hand</h2>
+  <input type="hidden" name="key" value="{{.Key}}"><input type="hidden" name="recipe" value="{{.Recipe}}">
+  <label>Name <input type="text" name="name" value="{{index $.Form "name"}}" required maxlength="120"></label>
+  <div class="filtergrid">
+    <label>The values below are <select name="basis"><option value="per100">per 100 g</option><option value="serving">per serving / each</option></select></label>
+    <label>That serving or each weighs (g) <input type="text" name="serving_g" inputmode="decimal" placeholder="needed for “per serving”"></label>
+    <label>Calories <input type="text" name="kcal" inputmode="decimal" required></label>
+    <label>Protein (g) <input type="text" name="protein" inputmode="decimal"></label>
+    <label>Carbs (g) <input type="text" name="carbs" inputmode="decimal"></label>
+    <label>Fat (g) <input type="text" name="fat" inputmode="decimal"></label>
+    <label>Grams per cup (optional) <input type="text" name="g_per_ml" inputmode="decimal" placeholder="grams per millilitre, e.g. 1.03"></label>
+  </div>
+  <button type="submit" class="primary">Save and use for “{{.Key}}”</button>
+</form>
+{{end}}{{end}}

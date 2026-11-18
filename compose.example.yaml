@@ -1,0 +1,43 @@
+# Sample Docker Compose file for voidgrid-shopping.
+#
+#   1. cp compose.example.yaml compose.yaml
+#   2. openssl rand -base64 32 > secret_key.txt && chmod 600 secret_key.txt
+#   3. docker compose up -d --build
+#   4. docker compose logs shopping     # shows the one-time /setup?token=... link
+#
+# The app speaks plain HTTP on port 8800 and must be served to people over
+# HTTPS by a reverse proxy (session cookies are always Secure, passkeys need
+# HTTPS). The port below is bound to this machine only; point the proxy at it.
+services:
+  shopping:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+    image: voidgrid-shopping:beta
+    container_name: shopping
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8800:8800"
+    volumes:
+      - shopping-data:/data            # database, photos and backups
+    environment:
+      # Encrypts the SMTP password, single sign-on secret and authenticator
+      # secrets. Keep it with your backups: without it those cannot be read.
+      VGS_SECRET_KEY_FILE: /run/secrets/vgs_secret_key
+      # Only behind a proxy that overwrites X-Forwarded-For (Caddy, nginx, Traefik do).
+      VGS_TRUST_PROXY: "true"
+      # VGS_BACKUP_HOURS: "24"         # 0 turns snapshots off
+      # VGS_BACKUP_KEEP: "7"
+    secrets:
+      - vgs_secret_key
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+secrets:
+  vgs_secret_key:
+    file: ./secret_key.txt
+
+volumes:
+  shopping-data:

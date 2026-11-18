@@ -1,0 +1,13 @@
+{{define "content"}}
+<section class="card narrow">
+  <h1>Create your account</h1>
+  <p class="note">For {{.Form.email}}. This link works once.</p>
+  {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+  <form method="post" action="/invite/{{.Token}}" autocomplete="on">
+    <label>Your name <input type="text" name="name" value="{{.Form.name}}" required maxlength="100" autocomplete="name"></label>
+    <label>Password <input type="password" name="password" required autocomplete="new-password"></label>
+    <label>Repeat password <input type="password" name="confirm" required autocomplete="new-password"></label>
+    <button type="submit" class="primary">Create account</button>
+  </form>
+</section>
+{{end}}

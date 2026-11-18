@@ -1,0 +1,48 @@
+{{define "content"}}
+<h1>Users</h1>
+{{if .Notice}}<p class="notice" role="status">{{.Notice}}</p>{{end}}
+{{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+{{if .UV.NewLink}}
+<section class="card">
+  <h2>{{if eq .UV.LinkKind "invite"}}Invite link{{else}}Reset link{{end}} for {{.UV.LinkFor}}</h2>
+  <p class="note">Shown only now. It works once{{if eq .UV.LinkKind "invite"}} and expires in 7 days{{else}} and expires in 24 hours{{end}}. Anyone with it can use it, so send it privately.</p>
+  <input type="text" readonly value="{{.UV.NewLink}}" aria-label="Link" data-select>
+</section>
+{{end}}
+<section class="card">
+  <h2>Accounts</h2>
+  <ul class="plain">
+  {{range .UV.Users}}
+    <li class="userrow">
+      <div><strong>{{.DisplayName}}</strong> <span class="note">{{.Email}}</span>
+        {{if .IsAdmin}}<span class="chip">admin</span>{{end}}{{if .Disabled}}<span class="chip warn">blocked</span>{{end}}
+        {{if .TOTPEnabled}}<span class="chip">2-step</span>{{end}}{{if .Passkeys}}<span class="chip">passkey</span>{{end}}</div>
+      <div class="actions">
+        <form method="post" action="/users/reset"><input type="hidden" name="email" value="{{.Email}}"><button type="submit">Reset link</button></form>
+        {{if not .Self}}<form method="post" action="/users/disable"><input type="hidden" name="email" value="{{.Email}}">
+          {{if .Disabled}}<button type="submit">Allow sign-in</button>{{else}}<input type="hidden" name="disable" value="1"><button type="submit" class="danger">Block</button>{{end}}</form>{{end}}
+      </div>
+    </li>
+  {{end}}
+  </ul>
+</section>
+<section class="card">
+  <h2>Invite someone</h2>
+  <p class="note">They get a link to choose their own password. It is emailed when email is set up, otherwise you copy it.</p>
+  <form method="post" action="/users/invite">
+    <label>Email <input type="email" name="email" value="{{.Form.email}}" required></label>
+    <label>Name (optional) <input type="text" name="name" value="{{.Form.name}}" maxlength="100"></label>
+    <label class="check"><input type="checkbox" name="admin" value="1"> Make them an admin</label>
+    <button type="submit" class="primary">Create invite</button>
+  </form>
+</section>
+{{if .UV.Links}}
+<section class="card">
+  <h2>Open links</h2>
+  <ul class="plain">{{range .UV.Links}}
+    <li class="userrow"><div>{{if eq .Kind "invite"}}Invite{{else}}Reset{{end}} for {{.Email}} <span class="note">expires {{.Expires.Format "2006-01-02 15:04"}} UTC</span></div>
+      <form method="post" action="/users/links/revoke"><input type="hidden" name="hash" value="{{.Hash}}"><button type="submit">Withdraw</button></form></li>
+  {{end}}</ul>
+</section>
+{{end}}
+{{end}}

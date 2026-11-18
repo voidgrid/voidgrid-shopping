@@ -1,0 +1,20 @@
+{{define "content"}}{{with .Link}}{{with .Product}}
+<div class="pagehead"><h1>Scanned product</h1><a href="/nutrition/link?key={{qe $.Link.Key}}&amp;recipe={{$.Link.Recipe}}">← Back</a></div>
+<section class="card">
+  <h2>{{if .Brand}}{{.Brand}} {{end}}{{or .Name "Unnamed product"}}</h2>
+  <p class="meta">Barcode {{.Barcode}}{{if .ServingG}} · serving {{n1 .ServingG}} g{{end}}{{if .PackageG}} · package {{n1 .PackageG}} g{{end}}</p>
+  {{if .HasNutrition}}
+  <p class="macros"><strong>{{n0 .Per100.Kcal}}</strong> kcal · <strong>{{n1 .Per100.Protein}}</strong> g protein · <strong>{{n1 .Per100.Carbs}}</strong> g carbs · <strong>{{n1 .Per100.Fat}}</strong> g fat <span class="meta">per 100 g</span></p>
+  <form class="inline" method="post" action="/nutrition/link">
+    <input type="hidden" name="key" value="{{$.Link.Key}}"><input type="hidden" name="recipe" value="{{$.Link.Recipe}}">
+    <input type="hidden" name="source" value="off"><input type="hidden" name="barcode" value="{{.Barcode}}">
+    <label>One each weighs (g)<input type="text" name="unit_g" value="{{if .ServingG}}{{n1 .ServingG}}{{end}}" inputmode="decimal"></label>
+    <button type="submit" class="primary">Use this for “{{$.Link.Key}}”</button>
+  </form>
+  {{else}}
+  <p class="error">Open Food Facts has this product but no nutrition for it. Enter the figures from the label by hand instead.</p>
+  <a class="btn primary" href="/nutrition/link?key={{qe $.Link.Key}}&amp;recipe={{$.Link.Recipe}}">Enter by hand</a>
+  {{end}}
+  <p class="note">Data from <a href="https://world.openfoodfacts.org/product/{{.Barcode}}" rel="noopener noreferrer nofollow" target="_blank">Open Food Facts</a>, available under the Open Database Licence.</p>
+</section>
+{{end}}{{end}}{{end}}

@@ -1,0 +1,98 @@
+{{define "content"}}
+<section class="card">
+  <h1>Settings</h1>
+  {{if .Notice}}<p class="notice" role="status">{{.Notice}}</p>{{end}}
+  {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+  <form method="post" action="/settings" class="settings">
+    <h2>General</h2>
+    <label>Public address
+      <input type="url" name="public_base_url" value="{{index .Form "public_base_url"}}" placeholder="https://shopping.example.com" inputmode="url">
+      <span class="hint">Where the app is reached from the internet. Emailed and shared links are built from it.</span>
+      {{with index .Errors "public_base_url"}}<span class="error">{{.}}</span>{{end}}
+    </label>
+    <label>Timezone
+      <input type="text" name="timezone" value="{{index .Form "timezone"}}" placeholder="America/Denver" required>
+      <span class="hint">Sets which day the planner treats as today.</span>
+      {{with index .Errors "timezone"}}<span class="error">{{.}}</span>{{end}}
+    </label>
+    <label>Units
+      <select name="units">
+        <option value="us"{{if eq (index .Form "units") "us"}} selected{{end}}>US (cups, ounces, pounds)</option>
+        <option value="metric"{{if eq (index .Form "units") "metric"}} selected{{end}}>Metric (grams, millilitres)</option>
+      </select>
+      {{with index .Errors "units"}}<span class="error">{{.}}</span>{{end}}
+    </label>
+    <label>Week starts on
+      <select name="week_start">
+        {{range .Weekdays}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+      {{with index .Errors "week_start"}}<span class="error">{{.}}</span>{{end}}
+    </label>
+    <label>Stay signed in for (hours)
+      <input type="number" name="session_hours" value="{{index .Form "session_hours"}}" min="1" max="2160" required>
+      {{with index .Errors "session_hours"}}<span class="error">{{.}}</span>{{end}}
+    </label>
+    <label>Default share link lifetime (days)
+      <input type="number" name="share_default_days" value="{{index .Form "share_default_days"}}" min="1" max="365" required>
+      <span class="hint">Every share link needs an expiry, at most 365 days.</span>
+      {{with index .Errors "share_default_days"}}<span class="error">{{.}}</span>{{end}}
+    </label>
+    <button type="submit" class="primary">Save settings</button>
+  </form>
+</section>
+<section class="card">
+  <h2>USDA food data</h2>
+  {{if .USDA.Foods}}<p>{{.USDA.Foods}} foods loaded: {{.USDA.Nutrients}} with nutrition, {{.USDA.Densities}} with a weight per volume ({{.USDA.Portions}} household measures).</p>
+  {{if not .USDA.Nutrients}}<p class="error">This data was loaded without nutrition. Run the import again to add it.</p>{{end}}
+  {{else}}<p class="note">Not loaded. Ingredient weights per cup (for converting between weight and volume) come from USDA FoodData Central.</p>{{end}}
+  <p class="note">Download the “SR Legacy” CSV zip from fdc.nal.usda.gov, copy it into the container, then run
+    <code>voidgrid-shopping admin import-usda &lt;file&gt;</code>. USDA data is public domain; the USDA asks to be credited as the source.</p>
+</section>
+<section class="card">
+  <h2>Email (SMTP)</h2>
+  <p class="note">Used for invite and password-reset emails. Without it, you copy the links yourself. Leave the server empty to turn email off.</p>
+  {{if .Mail.NoKey}}<p class="error">The server has no encryption key (VGS_SECRET_KEY), so a password can't be saved. See the README.</p>{{end}}
+  <form method="post" action="/settings/email" class="settings">
+    <label>Server <input type="text" name="smtp_host" value="{{index .Form "smtp_host"}}" placeholder="smtp.example.com" maxlength="200">
+      {{with index .Errors "smtp_host"}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Port <input type="number" name="smtp_port" value="{{index .Form "smtp_port"}}" min="1" max="65535" placeholder="587">
+      {{with index .Errors "smtp_port"}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Connection
+      <select name="smtp_security">
+        <option value="starttls"{{if eq (index .Form "smtp_security") "starttls"}} selected{{end}}>STARTTLS (usually port 587)</option>
+        <option value="tls"{{if eq (index .Form "smtp_security") "tls"}} selected{{end}}>TLS (usually port 465)</option>
+        <option value="none"{{if eq (index .Form "smtp_security") "none"}} selected{{end}}>None (plain; only on a trusted network)</option>
+      </select>
+      {{with index .Errors "smtp_security"}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>User name <input type="text" name="smtp_username" value="{{index .Form "smtp_username"}}" autocomplete="off" maxlength="200">
+      {{with index .Errors "smtp_username"}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Password <input type="password" name="smtp_password" autocomplete="new-password" placeholder="{{if .Mail.HasPassword}}saved; leave empty to keep it{{end}}">
+      {{with index .Errors "smtp_password"}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>From address <input type="text" name="smtp_from" value="{{index .Form "smtp_from"}}" placeholder="Shopping &lt;shopping@example.com&gt;" maxlength="200">
+      {{with index .Errors "smtp_from"}}<span class="error">{{.}}</span>{{end}}</label>
+    <button type="submit" class="primary">Save email settings</button>
+  </form>
+  {{if .Mail.Configured}}<form method="post" action="/settings/email/test"><button type="submit">Send a test email to me</button></form>{{end}}
+</section>
+<section class="card">
+  <h2>Single sign-on (Pocket ID)</h2>
+  <p class="note">Lets people sign in with your identity provider (OpenID Connect). Leave the address empty to turn it off.
+    {{if .SSO.Callback}}In the provider, set the redirect address to <code>{{.SSO.Callback}}</code>.{{else}}Set the public address above first; the provider needs the redirect address built from it.{{end}}</p>
+  {{if .SSO.NoKey}}<p class="error">The server has no encryption key (VGS_SECRET_KEY), so a client secret can't be saved. See the README.</p>{{end}}
+  <form method="post" action="/settings/sso" class="settings">
+    <label>Provider address <input type="url" name="oidc_issuer" value="{{index .Form "oidc_issuer"}}" placeholder="https://id.example.com" maxlength="200">
+      {{with index .Errors "oidc_issuer"}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Client ID <input type="text" name="oidc_client_id" value="{{index .Form "oidc_client_id"}}" autocomplete="off" maxlength="300">
+      {{with index .Errors "oidc_client_id"}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Client secret <input type="password" name="oidc_client_secret" autocomplete="new-password" placeholder="{{if .SSO.HasSecret}}saved; leave empty to keep it{{end}}">
+      {{with index .Errors "oidc_client_secret"}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Group claim <input type="text" name="oidc_group_claim" value="{{index .Form "oidc_group_claim"}}" maxlength="100">
+      {{with index .Errors "oidc_group_claim"}}<span class="error">{{.}}</span>{{end}}</label>
+    <label>Required group <input type="text" name="oidc_required_group" value="{{index .Form "oidc_required_group"}}" maxlength="200">
+      <span class="hint">Only people in this group can sign in, and accounts are created for them on first sign-in. Empty: nobody new is created; only existing accounts with a matching verified email can link.</span></label>
+    <label>Admin group (optional) <input type="text" name="oidc_admin_group" value="{{index .Form "oidc_admin_group"}}" maxlength="200">
+      <span class="hint">Members become admins. When set, an admin who leaves the group loses admin rights at their next sign-in.</span></label>
+    <button type="submit" class="primary">Save single sign-on</button>
+  </form>
+</section>
+{{end}}

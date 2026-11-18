@@ -1,0 +1,45 @@
+{{define "content"}}
+<div class="pagehead"><h1>Staples</h1><a href="/stores">Stores &amp; aisles</a></div>
+{{if .Notice}}<p class="notice" role="status">{{.Notice}}</p>{{end}}
+<p class="note">Things you buy regularly, food or not. Copy the ones you need onto the shopping list: they land in their aisle among the ingredients.</p>
+
+<form class="card inline" method="post" action="/staples">
+  <h2>Add a staple</h2>
+  <label>Item <input type="text" name="name" required maxlength="200"></label>
+  <label>Amount <input type="text" name="quantity" inputmode="decimal" placeholder="2"></label>
+  <label>Unit <input type="text" name="unit" maxlength="30" placeholder="gallon"></label>
+  <label>Store <select name="store_id"><option value="0">Not yet</option>{{range .List.Stores}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></label>
+  <label>Note <input type="text" name="note" maxlength="500" placeholder="Buy when less than 4 on shelves"></label>
+  <button type="submit" class="primary">Add</button>
+</form>
+
+{{if .StapleGroups}}
+<form method="post" action="/staples/copy">
+  <div class="actions stickybar">
+    <button type="submit" class="primary">Copy ticked to the list</button>
+    <button type="submit" name="all" value="1">Copy all</button>
+  </div>
+  {{range .StapleGroups}}
+  <section class="storegroup">
+    <h2>{{.Store}}</h2>
+    <ul class="items">
+      {{range .Staples}}
+      <li class="item">
+        <label class="check"><input type="checkbox" name="ids" value="{{.ID}}"> <span class="iname">{{.Name}}</span>{{with .Amount}} <span class="amt">{{.}}</span>{{end}}</label>
+        {{with .Note}}<span class="meta">{{.}}</span>{{end}}
+        <a class="btn" href="/staples/{{.ID}}/edit">Edit</a>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+</form>
+{{else}}<section class="card"><p>No staples yet. Add some above, or import your Plan to Eat grocery list below.</p></section>{{end}}
+
+<form class="card" method="post" action="/staples/import" enctype="multipart/form-data">
+  <h2>Import from Plan to Eat</h2>
+  <p class="note">Export a grocery list that holds only your staples and choose the .csv here. Names, amounts, units and notes come across; the store and category do not, so aisles are learned as you shop.</p>
+  <label>Grocery list file <input type="file" name="file" accept=".csv,text/csv" required></label>
+  <button type="submit">Import</button>
+</form>
+{{end}}

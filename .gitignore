@@ -1,0 +1,7 @@
+reference/
+/bin/
+/.dev/
+.env
+
+compose.yaml
+secret_key.txt

@@ -1,0 +1,19 @@
+name: lint
+
+# Runs the repo's own scripts/lint.sh (golangci-lint, pinned in the script and
+# run in Docker), so CI and the pre-commit hook use the same linter version.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: golangci-lint
+        run: scripts/lint.sh

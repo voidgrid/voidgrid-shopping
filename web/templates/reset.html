@@ -1,0 +1,12 @@
+{{define "content"}}
+<section class="card narrow">
+  <h1>Choose a new password</h1>
+  <p class="note">This link works once. Setting a password signs you out everywhere else.</p>
+  {{if .Error}}<p class="error" role="alert">{{.Error}}</p>{{end}}
+  <form method="post" action="/reset/{{.Token}}">
+    <label>New password <input type="password" name="password" required autocomplete="new-password" autofocus></label>
+    <label>Repeat password <input type="password" name="confirm" required autocomplete="new-password"></label>
+    <button type="submit" class="primary">Change password</button>
+  </form>
+</section>
+{{end}}
